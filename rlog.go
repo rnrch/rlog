@@ -33,7 +33,7 @@ type Logger interface {
 	WithValues(kvPairs ...interface{}) Logger
 	WithName(name string) Logger
 	SetLogger(logr logr.Logger)
-	SetVerbosity(v int)
+	SetVerbosity(v int) Logger
 }
 
 type loggingT struct {
@@ -74,8 +74,9 @@ func (l *loggingT) WithName(name string) Logger {
 	}
 }
 
-func (l *loggingT) SetVerbosity(v int) {
+func (l *loggingT) SetVerbosity(v int) Logger {
 	l.level = v
+	return l
 }
 
 type Verbose struct {
@@ -108,8 +109,9 @@ func init() {
 
 var globalVerbosity int = 0
 
-func SetVerbosity(v int) {
+func SetVerbosity(v int) Logger {
 	globalVerbosity = v
+	return &logging
 }
 
 func Info(msg string, kvPairs ...interface{}) {
