@@ -1,5 +1,8 @@
 # rlog
 
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/rnrch/rlog)](https://pkg.go.dev/github.com/rnrch/rlog)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rnrch/rlog)](https://goreportcard.com/report/github.com/rnrch/rlog)
+
 A minimal wrapper for [logr].
 
 ## Usage

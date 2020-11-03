@@ -21,11 +21,15 @@ import (
 )
 
 const (
+	// Production is the production mode of zapr
 	Production = iota
+	// Development is the development mode of zapr
 	Development
+	// Example is the example mode of zapr
 	Example
 )
 
+// Logger represents the ability to log messages
 type Logger interface {
 	Info(msg string, kvPairs ...interface{})
 	Error(err error, msg string, kvPairs ...interface{})
@@ -63,6 +67,7 @@ func (l *loggingT) WithValues(kvPairs ...interface{}) Logger {
 	}
 }
 
+// SetLogger sets the backing logr implementation.
 func (l *loggingT) SetLogger(logr logr.Logger) {
 	l.logr = logr
 }
@@ -79,6 +84,7 @@ func (l *loggingT) SetVerbosity(v int) Logger {
 	return l
 }
 
+// Verbose is a boolean type that implements logr and records weather it is enabled.
 type Verbose struct {
 	enabled bool
 	logr    logr.Logger
@@ -88,12 +94,14 @@ func newVerbose(b bool, l logr.Logger) Verbose {
 	return Verbose{b, l}
 }
 
+// Info logs a non-error message with the given key/value pairs as context when v is enabled.
 func (v Verbose) Info(msg string, kvPairs ...interface{}) {
 	if v.enabled {
 		v.logr.Info(msg, kvPairs...)
 	}
 }
 
+// Error logs an error, with the given message and key/value pairs as context when v is enabled.
 func (v Verbose) Error(err error, msg string, kvPairs ...interface{}) {
 	if v.enabled {
 		v.logr.Error(err, msg, kvPairs...)
@@ -109,19 +117,23 @@ func init() {
 
 var globalVerbosity int = 0
 
+// SetVerbosity sets the global level against which all logs will be compared.
 func SetVerbosity(v int) Logger {
 	globalVerbosity = v
 	return &logging
 }
 
+// Info logs a non-error message with the given key/value pairs as context.
 func Info(msg string, kvPairs ...interface{}) {
 	logging.logr.Info(msg, kvPairs...)
 }
 
+// Error logs an error, with the given message and key/value pairs as context.
 func Error(err error, msg string, kvPairs ...interface{}) {
 	logging.logr.Error(err, msg, kvPairs...)
 }
 
+// V returns a Verbose struct for a specific verbosity level, relative to this Logger.
 func V(level int) Verbose {
 	if globalVerbosity >= level {
 		return newVerbose(true, logging.logr)
@@ -129,6 +141,7 @@ func V(level int) Verbose {
 	return newVerbose(false, logging.logr)
 }
 
+// SwtichMode replaces the current rlog logger with a new zapr logger guarded by the input mode.
 func SwtichMode(mode int) {
 	switch mode {
 	case Development:
@@ -145,10 +158,12 @@ func SwtichMode(mode int) {
 	}
 }
 
+// SetLogger sets the backing logr implementation for rlog.
 func SetLogger(logr logr.Logger) {
 	logging.logr = logr
 }
 
+// NewLogger returns a Logger which is implemented by zapr.
 func NewLogger(mode int) Logger {
 	var logger *zap.Logger
 	switch mode {
