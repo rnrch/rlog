@@ -118,9 +118,8 @@ func init() {
 var globalVerbosity int = 0
 
 // SetVerbosity sets the global level against which all logs will be compared.
-func SetVerbosity(v int) Logger {
+func SetVerbosity(v int) {
 	globalVerbosity = v
-	return &logging
 }
 
 // Info logs a non-error message with the given key/value pairs as context.
