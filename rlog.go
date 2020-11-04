@@ -162,8 +162,8 @@ func SetLogger(logr logr.Logger) {
 	logging.logr = logr
 }
 
-// NewLogger returns a Logger which is implemented by zapr.
-func NewLogger(mode int) Logger {
+// NewZaprLogger returns a Logger which is implemented by zapr.
+func NewZaprLogger(mode int) Logger {
 	var logger *zap.Logger
 	switch mode {
 	case Development:
@@ -175,5 +175,13 @@ func NewLogger(mode int) Logger {
 	}
 	return &loggingT{
 		logr: zapr.NewLogger(logger),
+	}
+}
+
+// NewLogger returns a Logger implemented by a given logr.
+func NewLogger(logger logr.Logger, level int) Logger {
+	return &loggingT{
+		logr:  logger,
+		level: level,
 	}
 }
