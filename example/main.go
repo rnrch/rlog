@@ -31,7 +31,10 @@ func main() {
 	rlog.SetVerbosity(3)
 	rlog.V(3).Info("this is info3", "level", 3, "start", false)
 
-	logger := rlog.NewZaprLogger(rlog.Production)
+	logger, err := rlog.NewLogger(rlog.WithMode(rlog.Production))
+	if err != nil {
+		rlog.Error(err, "New logger")
+	}
 	logger = logger.WithName("myLogger").WithValues("testLogger", true)
 	logger.SetVerbosity(4)
 	logger.V(1).Error(errors.New("logger err"), "hello", "v", 1)
@@ -46,13 +49,17 @@ func main() {
 
 	rlog.V(2).Info("this is info2", "level", 2, "start", false)
 	rlog.V(3).Error(errors.New("error2"), "this is err2", "level", 3)
+	rlog.V(5).Error(errors.New("error3"), "this is err3", "level", 5)
 	rlog.SetVerbosity(2)
 	rlog.V(3).Info("this is info3", "level", 3, "start", false)
 
 	rlog.SwtichMode(rlog.Production)
 	rlog.V(5).Info("stiil should not appear")
-	rlog.Info("back to production")
+	rlog.V(1).Info("back to production")
 
-	logger = rlog.NewZaprLogger(rlog.Example)
+	logger, err = rlog.NewLogger(rlog.WithMode(rlog.Example))
+	if err != nil {
+		rlog.Error(err, "New logger")
+	}
 	logger.Info("this is a example logger")
 }

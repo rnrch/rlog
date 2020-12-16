@@ -23,12 +23,16 @@ func main() {
     rlog.V(5).Error(errors.New("err1"), "this should not be printed out", "visible", false)
     rlog.V(3).Error(errors.New("err2"), "this should be printed out", "visible", true, "level", 3)
 
-    logger := rlog.NewZaprLogger(rlog.Development).WithName("development").WithValues("mode", "dev").SetVerbosity(4)
+    logger, err := rlog.NewLogger(rlog.WithMode(rlog.Development))
+    if err != nil {
+        rlog.Error(err, "New logger")
+    }
+    logger = logger.WithName("myLogger").WithValues("testLogger", true)
     logger.V(1).Info("this is a new logger!", "visible", true)
-    logger.V(6).Error(errors.New("err"), "error from new logger", "visible", true)
-    logger.V(4).Error(errors.New("err2"), "error from new logger", "visible", false)
 }
 ```
+
+see more in [example](example)
 
 The default logr implementation is [zapr]. You can use `SetLogger` to change it.
 
