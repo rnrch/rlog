@@ -23,43 +23,22 @@ import (
 )
 
 func main() {
-	rlog.SetVerbosity(2)
-	rlog.Info("hello", "start", true)
-	rlog.Error(errors.New("error1"), "this is err1", "num", 1)
-	rlog.V(2).Info("this is info2", "level", 2, "start", false)
-	rlog.V(3).Error(errors.New("error2"), "this is err2", "level", 3)
-	rlog.SetVerbosity(3)
-	rlog.V(3).Info("this is info3", "level", 3, "start", false)
+	rlog.Info("hello", "default verbosity", rlog.GetVerbosity())
+	rlog.Error(errors.New("error"), "error msg 1", "num", 1)
 
-	logger, err := rlog.NewLogger(rlog.WithMode(rlog.Production))
+	rlog.V(2).Info("this is v2 info", "print", false)
+	rlog.SetVerbosity(5)
+	rlog.V(2).Info("this is v2 info again", "verbosity", rlog.GetVerbosity())
+	rlog.V(7).Error(errors.New("error"), "error msg 2", "num", 2, "print", false)
+
+	rlog.SwitchMode(rlog.Development)
+	logger := rlog.WithName("development").WithValues("foo", "bar")
+	logger.Info("hello world", "verbosity", logger.GetVerbosity())
+
+	logger, err := rlog.New(zapr.NewLogger(zap.NewExample()))
 	if err != nil {
-		rlog.Error(err, "New logger")
+		rlog.Error(err, "create new logger")
 	}
-	logger = logger.WithName("myLogger").WithValues("testLogger", true)
-	logger.SetVerbosity(4)
-	logger.V(1).Error(errors.New("logger err"), "hello", "v", 1)
-	logger.Error(errors.New("logger err2"), "another err")
-	logger.V(4).Info("info for logger", "v", 4)
-	logger.V(5).Info("info for logger", "v", 5)
-	logger.Info("info 2 for logger", "verbosity", false)
-
-	new, _ := zap.NewDevelopment()
-	newLogr := zapr.NewLogger(new)
-	rlog.SetLogger(newLogr)
-
-	rlog.V(2).Info("this is info2", "level", 2, "start", false)
-	rlog.V(3).Error(errors.New("error2"), "this is err2", "level", 3)
-	rlog.V(5).Error(errors.New("error3"), "this is err3", "level", 5)
-	rlog.SetVerbosity(2)
-	rlog.V(3).Info("this is info3", "level", 3, "start", false)
-
-	rlog.SwtichMode(rlog.Production)
-	rlog.V(5).Info("stiil should not appear")
-	rlog.V(1).Info("back to production")
-
-	logger, err = rlog.NewLogger(rlog.WithMode(rlog.Example))
-	if err != nil {
-		rlog.Error(err, "New logger")
-	}
-	logger.Info("this is a example logger")
+	logger = logger.WithName("example").WithValues("hello", "world").SetVerbosity(10)
+	logger.V(7).Info("new logger")
 }

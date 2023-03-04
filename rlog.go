@@ -23,46 +23,31 @@ import (
 // Mode is the mode of zapr loggers.
 type Mode int
 
-var (
-	// Production is the production mode of zapr
-	Production Mode = 1
-	// Development is the development mode of zapr
-	Development Mode = 2
-	// Example is the example mode of zapr
-	Example Mode = 3
+const (
+	Production Mode = iota + 1
+	Development
+	Example
 )
 
 type options struct {
-	mode   Mode
-	logger logr.Logger
-	v      int
+	v int
 }
 
 // Options configures how we set up the logger.
 type Options func(*options)
 
-// WithMode lets you set the mode of a zapr logger.
-func WithMode(mode Mode) func(*options) {
-	return func(o *options) {
-		o.mode = mode
-	}
-}
-
-// WithLogger lets you set the logr logger.
-func WithLogger(logger logr.Logger) func(*options) {
-	return func(o *options) {
-		o.logger = logger
-	}
-}
-
-// WithVerbosity lets you set Logger verbosity.
+// WithVerbosity sets Logger verbosity.
 func WithVerbosity(v int) func(*options) {
 	return func(o *options) {
 		o.v = v
 	}
 }
 
-// Logger represents the ability to log messages
+var defaultOptions = options{
+	v: 0,
+}
+
+// Logger represents implementation of rlog logger
 type Logger interface {
 	Info(msg string, kvPairs ...interface{})
 	Error(err error, msg string, kvPairs ...interface{})
@@ -71,81 +56,77 @@ type Logger interface {
 	WithName(name string) Logger
 	SetLogger(logr logr.Logger)
 	SetVerbosity(v int) Logger
+	GetVerbosity() int
 }
 
-// NewLogger returns a new Logger
-func NewLogger(opts ...Options) (Logger, error) {
-	o := options{
-		mode: Production,
-	}
+// New returns a new Logger
+func New(logger logr.Logger, opts ...Options) (Logger, error) {
+	o := defaultOptions
 	for _, opt := range opts {
 		opt(&o)
 	}
-	var err error
-	if o.logger == nil {
-		o.logger, err = newZaprLogger(o.mode)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &loggingT{
-		logr: o.logger,
-		v:    o.v,
+	return &rloggerT{
+		logger: logger,
+		v:      o.v,
 	}, nil
 }
 
-var logging loggingT
+var rlogger rloggerT
 
 func init() {
 	l, err := newZaprLogger(Production)
 	if err != nil {
 		panic(err)
 	}
-	logging.logr = l
+	rlogger.logger = l
 }
 
-type loggingT struct {
-	logr logr.Logger
-	v    int
+type rloggerT struct {
+	logger logr.Logger
+	v      int
 }
 
-func (l *loggingT) Info(msg string, kvPairs ...interface{}) {
-	l.logr.Info(msg, kvPairs...)
+func (l *rloggerT) Info(msg string, kvPairs ...interface{}) {
+	l.logger.Info(msg, kvPairs...)
 }
 
-func (l *loggingT) Error(err error, msg string, kvPairs ...interface{}) {
-	l.logr.Error(err, msg, kvPairs...)
+func (l *rloggerT) Error(err error, msg string, kvPairs ...interface{}) {
+	l.logger.Error(err, msg, kvPairs...)
 }
 
-func (l *loggingT) V(v int) Verbose {
+func (l *rloggerT) V(v int) Verbose {
 	if l.v >= v {
-		return newVerbose(true, l.logr)
+		return newVerbose(true, l.logger)
 	}
-	return newVerbose(false, l.logr)
+	return newVerbose(false, l.logger)
 }
 
-func (l *loggingT) WithValues(kvPairs ...interface{}) Logger {
-	return &loggingT{
-		l.logr.WithValues(kvPairs...),
-		l.v,
+func (l *rloggerT) WithValues(kvPairs ...interface{}) Logger {
+	return &rloggerT{
+		logger: l.logger.WithValues(kvPairs...),
+		v:      l.v,
+	}
+}
+
+func (l *rloggerT) WithName(name string) Logger {
+	return &rloggerT{
+		logger: l.logger.WithName(name),
+		v:      l.v,
 	}
 }
 
 // SetLogger sets the backing logr implementation.
-func (l *loggingT) SetLogger(logr logr.Logger) {
-	l.logr = logr
+func (l *rloggerT) SetLogger(logr logr.Logger) {
+	l.logger = logr
 }
 
-func (l *loggingT) WithName(name string) Logger {
-	return &loggingT{
-		l.logr.WithName(name),
-		l.v,
-	}
-}
-
-func (l *loggingT) SetVerbosity(v int) Logger {
+func (l *rloggerT) SetVerbosity(v int) Logger {
 	l.v = v
 	return l
+}
+
+func (l *rloggerT) GetVerbosity() int {
+	return l.v
 }
 
 // Verbose is a boolean type that implements logr and records weather it is enabled.
@@ -172,45 +153,61 @@ func (v Verbose) Error(err error, msg string, kvPairs ...interface{}) {
 	}
 }
 
-// SetVerbosity sets the global verbosity against which all logs will be compared.
-func SetVerbosity(v int) {
-	logging.v = v
-}
-
 // Info logs a non-error message with the given key/value pairs as context.
 func Info(msg string, kvPairs ...interface{}) {
-	logging.logr.Info(msg, kvPairs...)
+	rlogger.logger.Info(msg, kvPairs...)
 }
 
 // Error logs an error, with the given message and key/value pairs as context.
 func Error(err error, msg string, kvPairs ...interface{}) {
-	logging.logr.Error(err, msg, kvPairs...)
+	rlogger.logger.Error(err, msg, kvPairs...)
 }
 
 // V returns a Verbose struct for a specific verbosity level, relative to this Logger.
 func V(v int) Verbose {
-	if logging.v >= v {
-		return newVerbose(true, logging.logr)
+	if rlogger.v >= v {
+		return newVerbose(true, rlogger.logger)
 	}
-	return newVerbose(false, logging.logr)
+	return newVerbose(false, rlogger.logger)
 }
 
-// SwtichMode replaces the current rlog logger with a new zapr logger guarded by the input mode.
-func SwtichMode(mode Mode) {
-	l, err := newZaprLogger(mode)
-	if err != nil {
-		logging.logr.Error(err, "Switch mode", "mode", mode)
-		return
+func WithValues(kvPairs ...interface{}) Logger {
+	return &rloggerT{
+		logger: rlogger.logger.WithValues(kvPairs...),
+		v:      rlogger.v,
 	}
-	logging = loggingT{
-		logr: l,
-		v:    logging.v,
+}
+
+func WithName(name string) Logger {
+	return &rloggerT{
+		logger: rlogger.logger.WithName(name),
+		v:      rlogger.v,
 	}
 }
 
 // SetLogger sets the backing logr implementation for rlog.
 func SetLogger(logr logr.Logger) {
-	logging.logr = logr
+	rlogger.logger = logr
+}
+
+// SetVerbosity sets the global verbosity against which all logs will be compared.
+func SetVerbosity(v int) {
+	rlogger.v = v
+}
+
+// SetVerbosity prints out the global verbosity
+func GetVerbosity() int {
+	return rlogger.v
+}
+
+// SwitchMode changes the dafult zapr logger mode
+func SwitchMode(mode Mode) error {
+	l, err := newZaprLogger(mode)
+	if err != nil {
+		return err
+	}
+	rlogger.logger = l
+	return nil
 }
 
 func newZaprLogger(mode Mode) (logr.Logger, error) {
@@ -219,7 +216,7 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 	case Development:
 		logger, err := zap.NewDevelopment()
 		if err != nil {
-			return nil, err
+			return logr.Logger{}, err
 		}
 		l = zapr.NewLogger(logger)
 	case Example:
@@ -228,7 +225,7 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 	case Production:
 		logger, err := zap.NewProduction()
 		if err != nil {
-			return nil, err
+			return logr.Logger{}, err
 		}
 		l = zapr.NewLogger(logger)
 	}
