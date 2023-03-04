@@ -29,11 +29,14 @@ func main() {
 	rlog.V(2).Info("this is v2 info again", "verbosity", rlog.GetVerbosity())
 	rlog.V(7).Error(errors.New("error"), "error msg 2", "num", 2, "print", false)
 
-	rlog.SwitchMode(rlog.Development)
+	err := rlog.SwitchMode(rlog.Development)
+	if err != nil {
+		rlog.Error(err, "switch mode", "mode", rlog.Development)
+	}
 	logger := rlog.WithName("development").WithValues("foo", "bar")
 	logger.Info("hello world", "verbosity", logger.GetVerbosity())
 
-	logger, err := rlog.New(zapr.NewLogger(zap.NewExample()))
+	logger, err = rlog.New(zapr.NewLogger(zap.NewExample()))
 	if err != nil {
 		rlog.Error(err, "create new logger")
 	}
