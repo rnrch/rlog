@@ -2,7 +2,7 @@
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/rnrch/rlog)](https://pkg.go.dev/github.com/rnrch/rlog)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rnrch/rlog)](https://goreportcard.com/report/github.com/rnrch/rlog)
-![Github Actions](https://github.com/rnrch/rlog/workflows/CI/badge.svg)
+![Github Actions](https://github.com/rnrch/rlog/workflows/rlog/badge.svg)
 
 A minimal wrapper for [logr].
 
