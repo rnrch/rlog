@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: rlog
+name: CI
 on:
   push:
     tags:
@@ -24,16 +24,16 @@ permissions:
   contents: read
 jobs:
   golangci:
-    name: lint
+    name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
           go-version: "1.19"
-#      - uses: golangci/golangci-lint-action@v3
-#        with:
-#          version: v1.29
-#          args: -v
       - run: go mod verify
-      - run: go vet ./...
+      - name: lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.51
+          args: -v
