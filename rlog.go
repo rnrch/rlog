@@ -210,6 +210,10 @@ func SwitchMode(mode Mode) error {
 	return nil
 }
 
+func DefuaultLogger() Logger {
+	return &rlogger
+}
+
 func newZaprLogger(mode Mode) (logr.Logger, error) {
 	var l logr.Logger
 	switch mode {
