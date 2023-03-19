@@ -228,7 +228,7 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 			zapcore.NewConsoleEncoder(config.EncoderConfig),
 			zapcore.AddSync(colorable.NewColorableStdout()),
 			config.Level,
-		), zap.AddCallerSkip(1))
+		), zap.AddCaller(), zap.AddCallerSkip(1))
 		l = zapr.NewLogger(logger)
 	case Example:
 		logger := zap.NewExample()
