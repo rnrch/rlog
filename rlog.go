@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/mattn/go-colorable"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -221,10 +222,13 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 	var l logr.Logger
 	switch mode {
 	case Development:
-		logger, err := zap.NewDevelopment()
-		if err != nil {
-			return logr.Logger{}, err
-		}
+		config := zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		logger := zap.New(zapcore.NewCore(
+			zapcore.NewConsoleEncoder(config.EncoderConfig),
+			zapcore.AddSync(colorable.NewColorableStdout()),
+			config.Level,
+		), zap.AddCallerSkip(1))
 		l = zapr.NewLogger(logger)
 	case Example:
 		logger := zap.NewExample()
@@ -232,7 +236,7 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 	case Production:
 		config := zap.NewProductionConfig()
 		config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-		logger, err := config.Build()
+		logger, err := config.Build(zap.AddCallerSkip(1))
 		if err != nil {
 			return logr.Logger{}, err
 		}
