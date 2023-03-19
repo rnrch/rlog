@@ -15,9 +15,12 @@
 package rlog
 
 import (
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Mode is the mode of zapr loggers.
@@ -227,7 +230,9 @@ func newZaprLogger(mode Mode) (logr.Logger, error) {
 		logger := zap.NewExample()
 		l = zapr.NewLogger(logger)
 	case Production:
-		logger, err := zap.NewProduction()
+		config := zap.NewProductionConfig()
+		config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+		logger, err := config.Build()
 		if err != nil {
 			return logr.Logger{}, err
 		}
